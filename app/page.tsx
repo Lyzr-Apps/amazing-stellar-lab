@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { Send, Loader2, CheckCircle2 } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, Copy, Download, HelpCircle } from 'lucide-react'
 
 // Types
 interface ChatMessage {
@@ -60,11 +60,19 @@ interface EstimatorState {
   model_tier: 'budget' | 'standard' | 'premium'
 }
 
+// Example prompts
+const EXAMPLE_PROMPTS = [
+  "Process incoming customer support emails, extract sentiment and urgency, and auto-route to the right team with a summary",
+  "Monitor our Slack channel, identify tasks mentioned in conversations, create tickets in Jira, and update project managers",
+  "Analyze uploaded PDFs and Word documents, extract key information like contract terms and dates, store in database",
+]
+
 // Chat Component
 function ChatTab({ onWorkflowExtracted }: { onWorkflowExtracted: (data: WorkflowData) => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showExamples, setShowExamples] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -74,6 +82,8 @@ function ChatTab({ onWorkflowExtracted }: { onWorkflowExtracted: (data: Workflow
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || loading) return
+
+    setShowExamples(false)
 
     const userMessage: ChatMessage = {
       role: 'user',
@@ -150,13 +160,35 @@ Be conversational, friendly, and ask follow-up questions. Don't be robotic.`,
   }
 
   return (
-    <div className="flex flex-col h-[600px] gap-4">
+    <div className="flex flex-col h-[700px] gap-4">
       <ScrollArea className="flex-1 border rounded-lg p-4 bg-gray-50">
         <div className="space-y-4">
-          {messages.length === 0 && (
+          {messages.length === 0 && showExamples && (
+            <div className="space-y-4">
+              <div className="text-center text-gray-700 py-4">
+                <p className="font-medium mb-4 text-base">Welcome to AI Cost Discovery</p>
+                <p className="text-sm text-gray-600 mb-6">Tell me about your AI workflow and I'll help estimate your costs.</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs uppercase font-semibold text-gray-500 px-1">Example workflows:</p>
+                {EXAMPLE_PROMPTS.map((prompt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setInput(prompt)
+                      setShowExamples(false)
+                    }}
+                    className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-sm text-gray-700 hover:text-gray-900"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {messages.length === 0 && !showExamples && (
             <div className="text-center text-gray-500 py-8">
-              <p className="font-medium mb-2">Welcome to AI Cost Discovery</p>
-              <p className="text-sm">Tell me about your AI workflow and I'll help estimate your costs.</p>
+              <p className="font-medium mb-2">Start typing your workflow...</p>
             </div>
           )}
           {messages.map((msg, i) => (
@@ -183,14 +215,15 @@ Be conversational, friendly, and ask follow-up questions. Don't be robotic.`,
 
 
       <form onSubmit={sendMessage} className="flex gap-2">
-        <Input
+        <textarea
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Describe your workflow..."
+          placeholder="Describe your workflow... (e.g., 'I need to process customer emails and extract key information like order numbers and sentiment')"
           disabled={loading}
-          className="flex-1"
+          rows={5}
+          className="flex-1 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-sm"
         />
-        <Button type="submit" disabled={loading} size="sm">
+        <Button type="submit" disabled={loading} size="sm" className="h-fit self-end">
           <Send className="h-4 w-4" />
         </Button>
       </form>
@@ -702,26 +735,156 @@ export default function HomePage() {
           </TabsList>
 
           <TabsContent value="chat" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Describe Your Workflow</CardTitle>
-                <CardDescription>
-                  Tell me about your AI use case and I'll extract the details needed for cost estimation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChatTab onWorkflowExtracted={handleWorkflowExtracted} />
-              </CardContent>
-            </Card>
-            {workflowData && (
-              <Card className="mt-4 border-green-200 bg-green-50">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="font-medium">Workflow extracted! Check the Cost Estimator tab to adjust parameters.</span>
-                  </div>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Describe Your Workflow</CardTitle>
+                  <CardDescription>
+                    Tell me about your AI use case and I'll extract the details needed for cost estimation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChatTab onWorkflowExtracted={handleWorkflowExtracted} />
                 </CardContent>
               </Card>
+
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2 text-blue-900">
+                    <HelpCircle className="h-5 w-5" />
+                    What Information Helps Most
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-blue-900">
+                    <li className="flex gap-2">
+                      <span className="font-semibold">1.</span>
+                      <span>What's the main business problem you're solving?</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold">2.</span>
+                      <span>How many transactions/requests per month? (emails, chats, documents)</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold">3.</span>
+                      <span>Does the AI need to look up information (RAG), remember context, or call APIs?</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold">4.</span>
+                      <span>Are responses short answers or detailed explanations?</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+            {workflowData && (
+              <div className="mt-6 space-y-4">
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-2 text-green-700 mb-4">
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span className="font-medium">Workflow extracted successfully!</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Extracted Workflow Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-1">Business Problem</div>
+                      <p className="text-gray-900">{workflowData.business_problem}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-1">Workflow Description</div>
+                      <p className="text-gray-900 text-sm">{workflowData.workflow_description}</p>
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Category</div>
+                        <Badge variant="outline">{workflowData.use_case_category}</Badge>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Complexity</div>
+                        <Badge variant={workflowData.complexity_tier === 'High' ? 'default' : 'outline'}>
+                          {workflowData.complexity_tier}
+                        </Badge>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Agents Required</div>
+                        <span className="text-lg font-semibold text-gray-900">{workflowData.agents_required}</span>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Recommended Model</div>
+                        <span className="text-sm font-medium text-gray-900">{workflowData.recommended_model}</span>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-3">Features</div>
+                      <div className="flex flex-wrap gap-2">
+                        {workflowData.features.rag && <Badge>RAG</Badge>}
+                        {workflowData.features.memory && <Badge>Memory</Badge>}
+                        {workflowData.features.db_queries > 0 && <Badge>DB Queries ({workflowData.features.db_queries})</Badge>}
+                        {workflowData.features.tool_calls > 0 && <Badge>Tool Calls ({workflowData.features.tool_calls})</Badge>}
+                        {workflowData.features.reflection && <Badge>Reflection</Badge>}
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-3 gap-4 pt-2">
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Emails/Month</div>
+                        <span className="text-lg font-semibold text-gray-900">{workflowData.volume_estimates.emails_per_month.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Chats/Month</div>
+                        <span className="text-lg font-semibold text-gray-900">{workflowData.volume_estimates.chats_per_month.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Docs/Month</div>
+                        <span className="text-lg font-semibold text-gray-900">{workflowData.volume_estimates.docs_per_month.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      navigator.clipboard.writeText(JSON.stringify(workflowData, null, 2))
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const element = document.createElement('a')
+                      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(workflowData, null, 2)))
+                      element.setAttribute('download', 'workflow-extraction.json')
+                      element.style.display = 'none'
+                      document.body.appendChild(element)
+                      element.click()
+                      document.body.removeChild(element)
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download JSON
+                  </Button>
+                </div>
+
+                <div className="text-center text-sm text-gray-600 mt-4">
+                  <p>Ready? Move to the Cost Estimator tab to adjust parameters and see pricing.</p>
+                </div>
+              </div>
             )}
           </TabsContent>
 
