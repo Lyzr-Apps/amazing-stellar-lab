@@ -146,18 +146,18 @@ function DemoPlayback() {
   }
 
   return (
-    <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white pb-4">
+    <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden flex flex-col h-full">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white pb-4 flex-shrink-0">
         <CardTitle className="text-xl">See It In Action</CardTitle>
         <CardDescription className="text-blue-100">
           Watch how the agent asks clarifying questions to understand your use case
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="pt-6">
-        <div className="space-y-4">
+      <CardContent className="pt-6 flex-1 flex flex-col overflow-hidden">
+        <div className="space-y-4 flex flex-col h-full">
           {displayedMessages.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-24 flex flex-col items-center justify-center flex-1">
               <p className="text-gray-600 mb-6 text-sm">Start the demo to see the agent in action</p>
               <Button onClick={startDemo} className="bg-blue-600 hover:bg-blue-700">
                 <Play className="h-4 w-4 mr-2" />
@@ -166,7 +166,7 @@ function DemoPlayback() {
             </div>
           ) : (
             <>
-              <ScrollArea className="h-80 border rounded-lg p-4 bg-white">
+              <ScrollArea className="flex-1 border rounded-lg p-4 bg-white min-h-0">
                 <div className="space-y-3">
                   {displayedMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -183,70 +183,72 @@ function DemoPlayback() {
                 </div>
               </ScrollArea>
 
-              <div className="flex gap-2 items-center flex-wrap">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="flex-1 min-w-[120px]"
-                >
-                  {isPlaying ? (
-                    <>
-                      <Pause className="h-4 w-4 mr-2" />
-                      Pause
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      Resume
-                    </>
-                  )}
-                </Button>
+              <div className="flex-shrink-0 space-y-3 mt-4">
+                <div className="flex gap-2 items-center flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    className="flex-1 min-w-[100px]"
+                  >
+                    {isPlaying ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-2" />
+                        Pause
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Resume
+                      </>
+                    )}
+                  </Button>
 
-                <Select value={String(playSpeed)} onValueChange={(val) => setPlaySpeed(Number(val))}>
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0.75">0.75x</SelectItem>
-                    <SelectItem value="1">1x</SelectItem>
-                    <SelectItem value="1.5">1.5x</SelectItem>
-                    <SelectItem value="2">2x</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <Select value={String(playSpeed)} onValueChange={(val) => setPlaySpeed(Number(val))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0.75">0.75x</SelectItem>
+                      <SelectItem value="1">1x</SelectItem>
+                      <SelectItem value="1.5">1.5x</SelectItem>
+                      <SelectItem value="2">2x</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className="w-10"
-                >
-                  {soundEnabled ? (
-                    <Volume2 className="h-4 w-4" />
-                  ) : (
-                    <VolumeX className="h-4 w-4" />
-                  )}
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    className="w-10 p-0"
+                  >
+                    {soundEnabled ? (
+                      <Volume2 className="h-4 w-4" />
+                    ) : (
+                      <VolumeX className="h-4 w-4" />
+                    )}
+                  </Button>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={resetDemo}
-                  className="flex-1 min-w-[120px]"
-                >
-                  <SkipForward className="h-4 w-4 mr-2" />
-                  Restart
-                </Button>
-              </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetDemo}
+                    className="flex-1 min-w-[100px]"
+                  >
+                    <SkipForward className="h-4 w-4 mr-2" />
+                    Restart
+                  </Button>
+                </div>
 
-              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
-                <p className="font-medium mb-1 text-gray-700">What you're seeing:</p>
-                <ul className="space-y-1 text-left">
-                  <li>✓ User starts with a general problem statement</li>
-                  <li>✓ Agent asks clarifying questions about scope and requirements</li>
-                  <li>✓ Agent extracts technical details for accurate cost estimation</li>
-                  <li>✓ Agent provides initial cost estimate and next steps</li>
-                </ul>
+                <div className="bg-gray-50 rounded-lg p-2 text-xs text-gray-600">
+                  <p className="font-medium mb-1 text-gray-700 text-xs">Key takeaways:</p>
+                  <ul className="space-y-0.5 text-left text-xs">
+                    <li>User starts with general problem</li>
+                    <li>Agent asks clarifying questions</li>
+                    <li>Each answer refines the scope</li>
+                    <li>Agent extracts technical details & cost estimate</li>
+                  </ul>
+                </div>
               </div>
             </>
           )}
@@ -924,9 +926,57 @@ export default function HomePage() {
           </TabsList>
 
           <TabsContent value="chat" className="mt-6">
-            <div className="space-y-6">
-              <DemoPlayback />
+            <div className="grid grid-cols-4 gap-6 h-[950px]">
+              {/* Demo Section - Left Side, 3/4 width */}
+              <div className="col-span-3">
+                <DemoPlayback />
+              </div>
 
+              {/* Info Section - Right Sidebar, 1/4 width */}
+              <div className="space-y-3 overflow-y-auto pr-2">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2 text-blue-900">
+                      <HelpCircle className="h-4 w-4 flex-shrink-0" />
+                      What To Share
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-blue-900 space-y-2">
+                    <div className="flex gap-2">
+                      <span className="font-semibold min-w-fit">1.</span>
+                      <span>Business problem</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-semibold min-w-fit">2.</span>
+                      <span>Monthly volume</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-semibold min-w-fit">3.</span>
+                      <span>Tech needs (RAG, DB, APIs)</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-semibold min-w-fit">4.</span>
+                      <span>Response style</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-indigo-50 border-indigo-200">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm text-indigo-900">Agent Will:</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-indigo-900 space-y-2">
+                    <div>- Ask clarifying questions</div>
+                    <div>- Extract technical details</div>
+                    <div>- Recommend model tier</div>
+                    <div>- Estimate monthly cost</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* User Input Section - Below */}
+            <div className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Describe Your Workflow</CardTitle>
@@ -936,35 +986,6 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <ChatTab onWorkflowExtracted={handleWorkflowExtracted} />
-                </CardContent>
-              </Card>
-
-              <Card className="bg-blue-50 border-blue-200">
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2 text-blue-900">
-                    <HelpCircle className="h-5 w-5" />
-                    What Information Helps Most
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm text-blue-900">
-                    <li className="flex gap-2">
-                      <span className="font-semibold">1.</span>
-                      <span>What's the main business problem you're solving?</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-semibold">2.</span>
-                      <span>How many transactions/requests per month? (emails, chats, documents)</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-semibold">3.</span>
-                      <span>Does the AI need to look up information (RAG), remember context, or call APIs?</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="font-semibold">4.</span>
-                      <span>Are responses short answers or detailed explanations?</span>
-                    </li>
-                  </ul>
                 </CardContent>
               </Card>
             </div>
