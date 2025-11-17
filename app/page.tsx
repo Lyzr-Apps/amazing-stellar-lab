@@ -351,52 +351,47 @@ Be conversational, friendly, and ask follow-up questions. Don't be robotic.`,
   }
 
   return (
-    <div className="flex flex-col h-[700px] gap-4">
-      <ScrollArea className="flex-1 border rounded-lg p-4 bg-gray-50">
+    <div className="flex flex-col h-[700px] gap-4 bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <ScrollArea className="flex-1 p-4 bg-white">
         <div className="space-y-4">
-          {messages.length === 0 && showExamples && (
-            <div className="space-y-4">
-              <div className="text-center text-gray-700 py-4">
-                <p className="font-medium mb-4 text-base">Welcome to AI Cost Discovery</p>
-                <p className="text-sm text-gray-600 mb-6">Tell me about your AI workflow and I'll help estimate your costs.</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs uppercase font-semibold text-gray-500 px-1">Example workflows:</p>
-                {EXAMPLE_PROMPTS.map((prompt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      setInput(prompt)
-                      setShowExamples(false)
-                    }}
-                    className="w-full text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors text-sm text-gray-700 hover:text-gray-900"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
           {messages.length === 0 && !showExamples && (
             <div className="text-center text-gray-500 py-8">
-              <p className="font-medium mb-2">Start typing your workflow...</p>
+              <p className="font-medium mb-2 text-gray-700">Your conversation will appear here</p>
+              <p className="text-sm text-gray-600">Start by describing your AI workflow in the input below.</p>
             </div>
           )}
           {messages.map((msg, i) => (
-            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
+            <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2 group`}>
+              <div className={`max-w-sm px-4 py-3 rounded-lg ${
                 msg.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white border border-gray-200 text-gray-900'
+                  ? 'bg-blue-500 text-white rounded-br-none'
+                  : 'bg-gray-100 border border-gray-200 text-gray-900 rounded-bl-none'
               }`}>
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                <div className={`text-xs mt-2 ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
+                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </div>
+              {msg.role === 'assistant' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigator.clipboard.writeText(msg.content)}
+                  className="h-fit opacity-0 group-hover:opacity-100 transition-opacity self-start mt-1 p-0 w-8 h-8"
+                  title="Copy message"
+                >
+                  <Copy className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                </Button>
+              )}
             </div>
           ))}
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-200 px-3 py-2 rounded-lg">
-                <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+              <div className="bg-gray-100 border border-gray-200 px-4 py-3 rounded-lg rounded-bl-none">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                  <span className="text-sm text-gray-600">Agent is thinking...</span>
+                </div>
               </div>
             </div>
           )}
@@ -404,20 +399,41 @@ Be conversational, friendly, and ask follow-up questions. Don't be robotic.`,
         </div>
       </ScrollArea>
 
-
-      <form onSubmit={sendMessage} className="flex gap-2">
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Describe your workflow... (e.g., 'I need to process customer emails and extract key information like order numbers and sentiment')"
-          disabled={loading}
-          rows={5}
-          className="flex-1 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-sm"
-        />
-        <Button type="submit" disabled={loading} size="sm" className="h-fit self-end">
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
+      <div className="flex-shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-3 space-y-2">
+        <form onSubmit={sendMessage} className="space-y-2">
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                sendMessage(e as any)
+              }
+            }}
+            placeholder="Describe your workflow... (e.g., 'I need to process customer emails and extract key information')"
+            disabled={loading}
+            rows={5}
+            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans text-sm"
+          />
+          <div className="flex gap-2 items-center justify-between">
+            <div className="text-xs text-gray-500">
+              {messages.length} message{messages.length !== 1 ? 's' : ''} • Ctrl+Enter to send
+            </div>
+            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
