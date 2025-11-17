@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { Send, Loader2, CheckCircle2, Copy, Download, HelpCircle } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, Copy, Download, HelpCircle, Play, Pause, SkipForward, Volume2, VolumeX } from 'lucide-react'
 
 // Types
 interface ChatMessage {
@@ -66,6 +66,195 @@ const EXAMPLE_PROMPTS = [
   "Monitor our Slack channel, identify tasks mentioned in conversations, create tickets in Jira, and update project managers",
   "Analyze uploaded PDFs and Word documents, extract key information like contract terms and dates, store in database",
 ]
+
+// Demo conversation showing agent clarifying questions
+const DEMO_CONVERSATION = [
+  {
+    role: 'user',
+    content: 'We need an AI agent to handle our customer support emails. We get about 500 emails a day and need to categorize and respond to them.'
+  },
+  {
+    role: 'assistant',
+    content: 'Great! That\'s a solid use case. A few clarifying questions to help me estimate your costs accurately:\n\n1. When you say "categorize and respond" - are you looking for the AI to generate full responses, or draft summaries for human review?\n\n2. Do you need the agent to look up customer information from your CRM or knowledge base, or is it working with just the email content?'
+  },
+  {
+    role: 'user',
+    content: 'The AI should look up customer history from our CRM and generate full responses automatically for common issues, but escalate complex ones to our support team.'
+  },
+  {
+    role: 'assistant',
+    content: 'Perfect! That clarifies the scope significantly. Two more questions:\n\n1. How long are these emails typically? Short inquiries or detailed complaints with context?\n\n2. After the AI sends a response, do you need it to store the interaction in your database for learning/reporting?'
+  },
+  {
+    role: 'user',
+    content: 'Emails are usually medium length, 200-400 words. And yes, we need all interactions logged to our database so we can track patterns and improve responses over time.'
+  },
+  {
+    role: 'assistant',
+    content: 'Excellent! Based on what you\'ve shared, here\'s what I\'m extracting:\n\nBusiness Problem: Automate customer support email handling with intelligent routing\nWorkflow: Receive email → Look up customer history (CRM) → Generate response or escalate → Log to database\nComplexity: Medium\nFeatures Needed: RAG (CRM lookups), Database writes, Memory/context management\nRecommended Model: Claude Sonnet (strong reasoning for routing decisions)\n\nAt 500 emails/day (~11,000/month), with CRM lookups and DB logging, you\'re looking at roughly $200-250/month. Let\'s move to the estimator to fine-tune this!'
+  }
+]
+
+// Demo Playback Component
+function DemoPlayback() {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0)
+  const [displayedMessages, setDisplayedMessages] = useState<typeof DEMO_CONVERSATION>([])
+  const [playSpeed, setPlaySpeed] = useState(1)
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const demoScrollRef = useRef<HTMLDivElement>(null)
+  const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    demoScrollRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [displayedMessages])
+
+  useEffect(() => {
+    if (!isPlaying) {
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+      return
+    }
+
+    // Calculate delay based on message length and playback speed
+    const currentMsg = DEMO_CONVERSATION[currentMessageIndex]
+    const delay = Math.max(1500, currentMsg.content.length * 30) / playSpeed
+
+    playIntervalRef.current = setTimeout(() => {
+      if (currentMessageIndex < DEMO_CONVERSATION.length - 1) {
+        setCurrentMessageIndex(prev => prev + 1)
+        setDisplayedMessages(prev => [...prev, DEMO_CONVERSATION[currentMessageIndex + 1]])
+      } else {
+        setIsPlaying(false)
+      }
+    }, delay)
+
+    return () => {
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+    }
+  }, [isPlaying, currentMessageIndex, playSpeed])
+
+  const startDemo = () => {
+    setDisplayedMessages([DEMO_CONVERSATION[0]])
+    setCurrentMessageIndex(0)
+    setIsPlaying(true)
+  }
+
+  const resetDemo = () => {
+    setIsPlaying(false)
+    setCurrentMessageIndex(0)
+    setDisplayedMessages([])
+  }
+
+  return (
+    <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white pb-4">
+        <CardTitle className="text-xl">See It In Action</CardTitle>
+        <CardDescription className="text-blue-100">
+          Watch how the agent asks clarifying questions to understand your use case
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          {displayedMessages.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 mb-6 text-sm">Start the demo to see the agent in action</p>
+              <Button onClick={startDemo} className="bg-blue-600 hover:bg-blue-700">
+                <Play className="h-4 w-4 mr-2" />
+                Start Demo
+              </Button>
+            </div>
+          ) : (
+            <>
+              <ScrollArea className="h-80 border rounded-lg p-4 bg-white">
+                <div className="space-y-3">
+                  {displayedMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-sm px-4 py-3 rounded-lg text-sm ${
+                        msg.role === 'user'
+                          ? 'bg-blue-500 text-white rounded-br-none'
+                          : 'bg-gray-100 text-gray-900 border border-gray-200 rounded-bl-none'
+                      }`}>
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={demoScrollRef} />
+                </div>
+              </ScrollArea>
+
+              <div className="flex gap-2 items-center flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="flex-1 min-w-[120px]"
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="h-4 w-4 mr-2" />
+                      Pause
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Resume
+                    </>
+                  )}
+                </Button>
+
+                <Select value={String(playSpeed)} onValueChange={(val) => setPlaySpeed(Number(val))}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0.75">0.75x</SelectItem>
+                    <SelectItem value="1">1x</SelectItem>
+                    <SelectItem value="1.5">1.5x</SelectItem>
+                    <SelectItem value="2">2x</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className="w-10"
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="h-4 w-4" />
+                  ) : (
+                    <VolumeX className="h-4 w-4" />
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetDemo}
+                  className="flex-1 min-w-[120px]"
+                >
+                  <SkipForward className="h-4 w-4 mr-2" />
+                  Restart
+                </Button>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600">
+                <p className="font-medium mb-1 text-gray-700">What you're seeing:</p>
+                <ul className="space-y-1 text-left">
+                  <li>✓ User starts with a general problem statement</li>
+                  <li>✓ Agent asks clarifying questions about scope and requirements</li>
+                  <li>✓ Agent extracts technical details for accurate cost estimation</li>
+                  <li>✓ Agent provides initial cost estimate and next steps</li>
+                </ul>
+              </div>
+            </>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 // Chat Component
 function ChatTab({ onWorkflowExtracted }: { onWorkflowExtracted: (data: WorkflowData) => void }) {
@@ -735,7 +924,9 @@ export default function HomePage() {
           </TabsList>
 
           <TabsContent value="chat" className="mt-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              <DemoPlayback />
+
               <Card>
                 <CardHeader>
                   <CardTitle>Describe Your Workflow</CardTitle>
